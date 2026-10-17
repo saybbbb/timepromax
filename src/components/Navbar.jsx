@@ -54,8 +54,8 @@ export default function Navbar({ onOpenCheckout, cartCount = 0, activeTab, setAc
             }}
             className="flex items-center gap-2.5 group cursor-pointer"
           >
-            <div className="w-8 h-8 rounded-full border border-white/30 flex items-center justify-center bg-white/5 group-hover:border-sky-400 transition-colors">
-              <Watch className="w-4 h-4 text-white group-hover:text-sky-400 transition-colors" />
+            <div className="w-8 h-8 rounded-full border border-[#38bdf8]/40 flex items-center justify-center bg-gradient-to-br from-[#151c2a] to-[#0b0e17] shadow-[0_0_12px_rgba(56,189,248,0.3)] group-hover:border-[#38bdf8] group-hover:scale-105 transition-all p-1">
+              <img src="/favicon.svg" alt="TimePro Max Logo" className="w-full h-full object-contain" />
             </div>
             <div className="flex items-baseline">
               <span className="font-extrabold tracking-tight text-xl text-white font-sans">
