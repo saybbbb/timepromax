@@ -1,6 +1,9 @@
-import React, { useState, useRef } from 'react';
-import { Phone, Clock, MapPin, Star, ShieldCheck, ChevronLeft, ChevronRight, CheckCircle2, Award } from 'lucide-react';
-import { motion } from 'framer-motion';
+import React, { useState, useRef, useEffect } from 'react';
+import { Phone, Clock, MapPin, Star, ShieldCheck, CheckCircle2, Award } from 'lucide-react';
+import gsap from 'gsap';
+import { ScrollTrigger } from 'gsap/ScrollTrigger';
+
+gsap.registerPlugin(ScrollTrigger);
 
 const ROW_1_REVIEWS = [
   {
@@ -88,7 +91,8 @@ const ROW_2_REVIEWS = [
   },
 ];
 
-const VERIFIED_REVIEWS = [...ROW_1_REVIEWS, ...ROW_2_REVIEWS];
+const ROW_1_QUAD = [...ROW_1_REVIEWS, ...ROW_1_REVIEWS, ...ROW_1_REVIEWS, ...ROW_1_REVIEWS];
+const ROW_2_QUAD = [...ROW_2_REVIEWS, ...ROW_2_REVIEWS, ...ROW_2_REVIEWS, ...ROW_2_REVIEWS];
 
 function ReviewCard({ review }) {
   return (
@@ -153,8 +157,129 @@ function ReviewCard({ review }) {
 }
 
 export default function ContactUs() {
+  const sectionRef = useRef(null);
+  const showroomRef = useRef(null);
+  const reviewsHeaderRef = useRef(null);
+  const marqueeWrapperRef = useRef(null);
+  const row1Ref = useRef(null);
+  const row2Ref = useRef(null);
+  const isHoveredRef = useRef(false);
+
+  useEffect(() => {
+    // 1. Entrance reveals with ScrollTrigger
+    const ctx = gsap.context(() => {
+      if (showroomRef.current) {
+        gsap.fromTo(
+          showroomRef.current,
+          { opacity: 0, y: 35 },
+          {
+            opacity: 1,
+            y: 0,
+            duration: 0.9,
+            ease: 'power3.out',
+            scrollTrigger: {
+              trigger: showroomRef.current,
+              start: 'top 85%',
+            },
+          }
+        );
+      }
+
+      if (reviewsHeaderRef.current) {
+        gsap.fromTo(
+          reviewsHeaderRef.current.children,
+          { opacity: 0, y: 25 },
+          {
+            opacity: 1,
+            y: 0,
+            duration: 0.8,
+            stagger: 0.15,
+            ease: 'power3.out',
+            scrollTrigger: {
+              trigger: reviewsHeaderRef.current,
+              start: 'top 85%',
+            },
+          }
+        );
+      }
+    }, sectionRef);
+
+    // 2. Lenis Velocity-Reactive Infinite Marquee Physics
+    let isVisible = false;
+    let xPercent1 = 0;
+    let xPercent2 = -50;
+    let smoothVelocity = 0;
+    let smoothSkew = 0;
+
+    const st = ScrollTrigger.create({
+      trigger: marqueeWrapperRef.current,
+      start: 'top bottom',
+      end: 'bottom top',
+      onToggle: (self) => {
+        isVisible = self.isActive;
+      },
+    });
+
+    const tickerFn = (time, deltaTime) => {
+      if (!isVisible) return;
+
+      // Delta time in seconds clamped to avoid jumps during background tab wake
+      const dt = Math.min(deltaTime / 1000, 0.05);
+
+      // Current Lenis velocity
+      const targetVel = window.lenis ? window.lenis.velocity : 0;
+      smoothVelocity += (targetVel - smoothVelocity) * 0.08;
+
+      // Aerodynamic inertia skew: leans cards subtly into the scroll direction
+      const targetSkew = Math.max(-5.5, Math.min(5.5, -smoothVelocity * 0.35));
+      smoothSkew += (targetSkew - smoothSkew) * 0.1;
+
+      // Momentum acceleration
+      const velocityMultiplier = Math.abs(smoothVelocity) * 0.18;
+      const currentMultiplier = isHoveredRef.current ? 0 : (1 + velocityMultiplier);
+
+      // Base translation speed (% of row width per second)
+      const baseSpeed = 1.15;
+      const deltaMove = baseSpeed * currentMultiplier * dt;
+
+      // Row 1 (moving left)
+      xPercent1 -= deltaMove;
+      if (xPercent1 <= -50) xPercent1 += 50;
+      if (xPercent1 > 0) xPercent1 -= 50;
+
+      // Row 2 (moving right)
+      xPercent2 += deltaMove;
+      if (xPercent2 >= 0) xPercent2 -= 50;
+      if (xPercent2 < -50) xPercent2 += 50;
+
+      if (row1Ref.current) {
+        gsap.set(row1Ref.current, {
+          xPercent: xPercent1,
+          skewX: smoothSkew,
+          force3D: true,
+        });
+      }
+
+      if (row2Ref.current) {
+        gsap.set(row2Ref.current, {
+          xPercent: xPercent2,
+          skewX: smoothSkew,
+          force3D: true,
+        });
+      }
+    };
+
+    gsap.ticker.add(tickerFn);
+
+    return () => {
+      gsap.ticker.remove(tickerFn);
+      st.kill();
+      ctx.revert();
+    };
+  }, []);
+
   return (
-    <section id="contact" className="pt-24 pb-28 bg-[#0a0c10] text-gray-200 relative overflow-hidden">
+    <section ref={sectionRef} id="contact" className="pt-24 pb-28 bg-[#0a0c10] text-gray-200 relative overflow-hidden">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         
         {/* Header */}
@@ -168,7 +293,10 @@ export default function ContactUs() {
         </div>
 
         {/* 1. Showroom & Contact Information Card matching Canva 3.png */}
-        <div className="p-8 sm:p-12 rounded-3xl bg-gradient-to-b from-[#181a20] to-[#121318] border border-white/10 mb-24 shadow-2xl">
+        <div
+          ref={showroomRef}
+          className="p-8 sm:p-12 rounded-3xl bg-gradient-to-b from-[#181a20] to-[#121318] border border-white/10 mb-24 shadow-2xl will-change-transform"
+        >
           <div className="grid grid-cols-1 md:grid-cols-12 gap-10 items-center">
             
             {/* Left: Circular Model Photo */}
@@ -263,7 +391,7 @@ export default function ContactUs() {
 
       </div>
 
-      {/* 2. VERIFIED BUYER REVIEWS (Dual-row left & right marquee matching TimePro Max dark tech theme) */}
+      {/* 2. VERIFIED BUYER REVIEWS (Dual-row velocity-reactive physics marquee linked to Lenis) */}
       <div className="w-full pt-12 pb-16 relative overflow-hidden border-t border-white/10">
         
         {/* Subtle Cyan Ambient Glow */}
@@ -271,8 +399,8 @@ export default function ContactUs() {
 
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 mb-10 sm:mb-12 relative z-10">
           
-          {/* Section Header */}
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-6">
+          {/* Section Header with ScrollTrigger Entrance */}
+          <div ref={reviewsHeaderRef} className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-6">
             
             {/* Left: "Owners say it best" */}
             <div className="flex flex-col">
@@ -308,23 +436,34 @@ export default function ContactUs() {
           </div>
         </div>
 
-        {/* Dual-Row Marquee Tracks (Row 1 Left, Row 2 Right) */}
-        <div className="relative reviews-marquee-track overflow-hidden py-3 space-y-5 sm:space-y-6">
+        {/* Dual-Row Marquee Tracks (Row 1 Left, Row 2 Right) Driven by Lenis Velocity */}
+        <div
+          ref={marqueeWrapperRef}
+          onMouseEnter={() => { isHoveredRef.current = true; }}
+          onMouseLeave={() => { isHoveredRef.current = false; }}
+          className="relative reviews-marquee-track overflow-hidden py-3 space-y-5 sm:space-y-6"
+        >
           
           {/* Left & Right Edge Vignette Fades blending seamlessly into dark page */}
           <div className="absolute left-0 top-0 bottom-0 w-16 sm:w-44 bg-gradient-to-r from-[#0a0c10] via-[#0a0c10]/80 to-transparent pointer-events-none z-10" />
           <div className="absolute right-0 top-0 bottom-0 w-16 sm:w-44 bg-gradient-to-l from-[#0a0c10] via-[#0a0c10]/80 to-transparent pointer-events-none z-10" />
 
-          {/* Row 1: Scrolling Left */}
-          <div className="animate-marquee-left flex gap-5 sm:gap-6 pl-4">
-            {[...ROW_1_REVIEWS, ...ROW_1_REVIEWS].map((rev, idx) => (
+          {/* Row 1: Scrolling Left with Lenis Velocity Physics */}
+          <div
+            ref={row1Ref}
+            className="flex gap-5 sm:gap-6 pl-4 will-change-transform w-max select-none cursor-grab active:cursor-grabbing"
+          >
+            {ROW_1_QUAD.map((rev, idx) => (
               <ReviewCard key={`r1-${rev.id}-${idx}`} review={rev} />
             ))}
           </div>
 
-          {/* Row 2: Scrolling Right */}
-          <div className="animate-marquee-right flex gap-5 sm:gap-6 pl-4">
-            {[...ROW_2_REVIEWS, ...ROW_2_REVIEWS].map((rev, idx) => (
+          {/* Row 2: Scrolling Right with Lenis Velocity Physics */}
+          <div
+            ref={row2Ref}
+            className="flex gap-5 sm:gap-6 pl-4 will-change-transform w-max select-none cursor-grab active:cursor-grabbing"
+          >
+            {ROW_2_QUAD.map((rev, idx) => (
               <ReviewCard key={`r2-${rev.id}-${idx}`} review={rev} />
             ))}
           </div>
@@ -335,7 +474,7 @@ export default function ContactUs() {
         <div className="mt-8 text-center relative z-10">
           <span className="text-[11px] sm:text-xs font-mono text-gray-500 uppercase tracking-widest flex items-center justify-center gap-2">
             <ShieldCheck className="w-3.5 h-3.5 text-[#38bdf8]" />
-            <span>Hover over any review to pause • 100% Authenticated Purchases</span>
+            <span>Hover over any review to pause • Velocity-reactive scroll physics</span>
           </span>
         </div>
 
