@@ -6,9 +6,13 @@ export default function Footer({ onOpenCheckout, setActiveTab }) {
     if (typeof setActiveTab === 'function') {
       setActiveTab(id);
     }
-    const element = document.getElementById(id);
-    if (element) {
-      element.scrollIntoView({ behavior: 'smooth' });
+    if (window.lenis) {
+      window.lenis.scrollTo(`#${id}`, { offset: -70, duration: 1.4 });
+    } else {
+      const element = document.getElementById(id);
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth' });
+      }
     }
   };
 
@@ -22,8 +26,8 @@ export default function Footer({ onOpenCheckout, setActiveTab }) {
           {/* Brand Info */}
           <div className="md:col-span-5 flex flex-col gap-4">
             <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-full border border-white/30 flex items-center justify-center bg-white/5">
-                <Watch className="w-4 h-4 text-white" />
+              <div className="w-8 h-8 rounded-full border border-[#38bdf8]/40 flex items-center justify-center bg-gradient-to-br from-[#151c2a] to-[#0b0e17] shadow-[0_0_12px_rgba(56,189,248,0.3)] p-1">
+                <img src="/favicon.svg" alt="TimePro Max Logo" className="w-full h-full object-contain" />
               </div>
               <div className="flex items-baseline">
                 <span className="font-extrabold tracking-tight text-xl text-white">

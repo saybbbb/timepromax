@@ -32,9 +32,13 @@ export default function Hero({ onOpenCheckout }) {
   };
 
   const scrollToProducts = () => {
-    const el = document.getElementById('products');
-    if (el) {
-      el.scrollIntoView({ behavior: 'smooth' });
+    if (window.lenis) {
+      window.lenis.scrollTo('#products', { offset: -60, duration: 1.3 });
+    } else {
+      const el = document.getElementById('products');
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth' });
+      }
     }
   };
 

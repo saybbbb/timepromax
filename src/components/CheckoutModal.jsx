@@ -126,7 +126,7 @@ export default function CheckoutModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-black/85 backdrop-blur-xl flex items-center justify-center p-3 sm:p-6">
+    <div data-lenis-prevent className="fixed inset-0 z-50 overflow-y-auto bg-black/85 backdrop-blur-xl flex items-center justify-center p-3 sm:p-6">
       <motion.div
         initial={{ opacity: 0, scale: 0.95, y: 15 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -178,7 +178,7 @@ export default function CheckoutModal({
         )}
 
         {/* Modal Body */}
-        <div className="p-6 sm:p-8 max-h-[82vh] overflow-y-auto">
+        <div data-lenis-prevent className="p-6 sm:p-8 max-h-[82vh] overflow-y-auto">
           
           {/* STEP 1: SHIPPING & CONTACT */}
           {step === 1 && (
