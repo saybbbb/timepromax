@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { MessageSquare, X, Send, Sparkles, ShoppingBag, Minimize2, CheckCircle2, ChevronRight, RefreshCw, Bot } from 'lucide-react';
+import { MessageSquare, X, Send, ShoppingBag, Minimize2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const KNOWLEDGE_BASE = [
@@ -51,7 +51,7 @@ const INITIAL_MESSAGES = [
   {
     id: 1,
     sender: 'bot',
-    text: "Mabuhay! I'm your TimePro Max offline concierge. Ask me anything about pricing, battery life, water resistance, or showroom visits in CDO!",
+    text: "Mabuhay! How can we help? Choose a topic below or ask about prices, watch features, or store hours.",
   },
 ];
 
@@ -67,16 +67,14 @@ export default function FloatingChatbot({ onOpenCheckout }) {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState(INITIAL_MESSAGES);
   const [input, setInput] = useState('');
-  const [isTyping, setIsTyping] = useState(false);
-  const [hasUnread, setHasUnread] = useState(true);
   const chatBottomRef = useRef(null);
+  const nextMessageId = useRef(2);
 
   useEffect(() => {
     if (isOpen) {
-      setHasUnread(false);
       chatBottomRef.current?.scrollIntoView({ behavior: 'smooth' });
     }
-  }, [isOpen, messages, isTyping]);
+  }, [isOpen, messages]);
 
   const findSmartAnswer = (query) => {
     const q = query.toLowerCase().trim();
@@ -95,23 +93,16 @@ export default function FloatingChatbot({ onOpenCheckout }) {
     const text = (textToSend || input).trim();
     if (!text) return;
 
-    const userMsg = { id: Date.now(), sender: 'user', text };
-    setMessages((prev) => [...prev, userMsg]);
+    const userMsg = { id: nextMessageId.current++, sender: 'user', text };
+    const match = findSmartAnswer(text);
+    const botMsg = {
+      id: nextMessageId.current++,
+      sender: 'bot',
+      text: match.answer,
+      actionText: match.actionText,
+    };
+    setMessages((prev) => [...prev, userMsg, botMsg]);
     setInput('');
-    setIsTyping(true);
-
-    // Simulated offline intelligence response
-    setTimeout(() => {
-      const match = findSmartAnswer(text);
-      const botMsg = {
-        id: Date.now() + 1,
-        sender: 'bot',
-        text: match.answer,
-        actionText: match.actionText,
-      };
-      setMessages((prev) => [...prev, botMsg]);
-      setIsTyping(false);
-    }, 500);
   };
 
   return (
@@ -125,25 +116,22 @@ export default function FloatingChatbot({ onOpenCheckout }) {
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.9, y: 20 }}
             transition={{ duration: 0.25, ease: 'easeOut' }}
-            className="w-[90vw] sm:w-[380px] h-[520px] max-h-[80vh] rounded-3xl bg-[#0c0e14]/95 backdrop-blur-2xl border border-white/15 shadow-[0_20px_50px_rgba(0,0,0,0.9)] flex flex-col overflow-hidden mb-3"
+            id="quick-help"
+            role="region"
+            aria-labelledby="quick-help-heading"
+            className="w-[calc(100vw-3rem)] sm:w-[380px] h-[520px] max-h-[70dvh] rounded-2xl bg-[#0c0e14] border border-white/15 shadow-lg flex flex-col overflow-hidden mb-3"
           >
             {/* Header */}
-            <div className="p-4 bg-gradient-to-r from-blue-950/80 via-black to-[#0c0e14] border-b border-white/10 flex items-center justify-between">
+            <div className="p-4 border-b border-white/10 flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="relative w-9 h-9 rounded-full bg-gradient-to-tr from-[#38bdf8] to-blue-600 p-[1.5px]">
-                  <div className="w-full h-full rounded-full bg-black flex items-center justify-center">
-                    <Bot className="w-4 h-4 text-[#38bdf8]" />
-                  </div>
-                  <span className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-emerald-400 border border-black" />
+                <div className="w-9 h-9 rounded-full bg-white/5 flex items-center justify-center">
+                  <MessageSquare className="w-4 h-4 text-[#38bdf8]" />
                 </div>
                 <div>
-                  <h4 className="text-sm font-bold text-white leading-tight">
-                    TimePro AI Assistant
+                  <h4 id="quick-help-heading" className="text-sm font-bold text-white leading-tight">
+                    Quick Help
                   </h4>
-                  <div className="flex items-center gap-1.5 text-[10px] text-gray-400 font-mono">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-                    <span>Smart Offline Mode</span>
-                  </div>
+                  <p className="text-xs text-gray-400 mt-1">Prices, features & store information</p>
                 </div>
               </div>
 
@@ -151,7 +139,7 @@ export default function FloatingChatbot({ onOpenCheckout }) {
                 <button
                   onClick={() => setIsOpen(false)}
                   className="p-1.5 rounded-full text-gray-400 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
-                  title="Minimize Chat"
+                  aria-label="Minimize Quick Help"
                 >
                   <Minimize2 className="w-4 h-4" />
                 </button>
@@ -159,7 +147,7 @@ export default function FloatingChatbot({ onOpenCheckout }) {
             </div>
 
             {/* Chat Messages Body */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-3 scrollbar-thin">
+            <div role="log" aria-label="Help conversation" aria-live="polite" className="flex-1 overflow-y-auto p-4 space-y-3 scrollbar-thin">
               {messages.map((m) => (
                 <div
                   key={m.id}
@@ -191,16 +179,6 @@ export default function FloatingChatbot({ onOpenCheckout }) {
                 </div>
               ))}
 
-              {/* Typing indicator */}
-              {isTyping && (
-                <div className="flex justify-start">
-                  <div className="px-3 py-2 rounded-2xl bg-white/10 border border-white/10 text-gray-400 text-xs flex items-center gap-1.5">
-                    <RefreshCw className="w-3 h-3 animate-spin text-[#38bdf8]" />
-                    <span>TimePro Concierge is answering...</span>
-                  </div>
-                </div>
-              )}
-
               <div ref={chatBottomRef} />
             </div>
 
@@ -227,13 +205,15 @@ export default function FloatingChatbot({ onOpenCheckout }) {
             >
               <input
                 type="text"
-                placeholder="Ask about specs, price, CDO hub..."
+                placeholder="Ask about prices or features..."
+                aria-label="Your question"
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 className="flex-1 px-3.5 py-2.5 rounded-full bg-white/5 border border-white/10 text-white text-xs outline-none focus:border-[#38bdf8]"
               />
               <button
                 type="submit"
+                aria-label="Send question"
                 disabled={!input.trim()}
                 className="w-9 h-9 rounded-full bg-[#1e40af] hover:bg-[#1d4ed8] text-white flex items-center justify-center transition-all disabled:opacity-40 cursor-pointer shrink-0"
               >
@@ -249,23 +229,19 @@ export default function FloatingChatbot({ onOpenCheckout }) {
         whileHover={{ scale: 1.05 }}
         whileTap={{ scale: 0.95 }}
         onClick={() => setIsOpen(!isOpen)}
-        className="relative group p-3.5 rounded-full bg-gradient-to-r from-[#1e40af] via-blue-600 to-[#38bdf8] text-white shadow-[0_10px_30px_rgba(37,99,235,0.5)] border border-white/20 flex items-center justify-center cursor-pointer"
-        aria-label="Open TimePro Assistant"
+        className="p-3.5 rounded-full bg-[#1e40af] hover:bg-[#1d4ed8] text-white shadow-lg flex items-center justify-center cursor-pointer"
+        aria-label={isOpen ? 'Close Quick Help' : 'Open Quick Help'}
+        aria-expanded={isOpen}
+        aria-controls="quick-help"
       >
-        {/* Glow Ping Effect */}
-        <span className="absolute -inset-1 rounded-full bg-[#38bdf8] opacity-30 blur-sm group-hover:opacity-60 transition-opacity" />
-
         {isOpen ? (
           <X className="w-6 h-6 relative z-10" />
         ) : (
           <div className="relative z-10 flex items-center gap-2">
-            <Bot className="w-6 h-6" />
-            <span className="hidden sm:inline-block text-xs font-bold font-mono tracking-wider pr-1">
-              Ask AI
+            <MessageSquare className="w-5 h-5" />
+            <span className="hidden sm:inline-block text-sm font-medium pr-1">
+              Quick Help
             </span>
-            {hasUnread && (
-              <span className="absolute -top-1 -right-1 w-3 h-3 rounded-full bg-emerald-400 border-2 border-black animate-pulse" />
-            )}
           </div>
         )}
       </motion.button>

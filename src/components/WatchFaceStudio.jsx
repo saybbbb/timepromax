@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Heart, Activity, Compass, Sparkles, Flame, Footprints, BatteryCharging, Wifi, ArrowRight, Layers } from 'lucide-react';
+import { Heart, Compass, Flame, Footprints, BatteryCharging, Wifi, ArrowRight, Layers } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export const WATCH_FACES = [
@@ -92,15 +92,11 @@ export default function WatchFaceStudio({ onOrderWatch }) {
         
         {/* Section Header */}
         <div className="text-center max-w-3xl mx-auto mb-16">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-950/40 border border-blue-500/30 text-[#38bdf8] text-xs font-mono tracking-wider uppercase mb-3">
-            <Sparkles className="w-3.5 h-3.5 text-[#38bdf8]" />
-            <span>Interactive Dial & Strap Studio</span>
-          </div>
           <h2 className="text-3xl sm:text-5xl font-black text-white tracking-tight uppercase font-sans">
             CUSTOMIZE YOUR <span className="text-[#38bdf8]">TIMEPRO MAX</span>
           </h2>
           <p className="mt-3 text-gray-400 text-sm sm:text-base">
-            Switch between interactive animated dials, casing finishes, and textured luxury straps in real-time.
+            Choose a watch face, strap, and case color to preview your watch.
           </p>
         </div>
 
@@ -482,7 +478,7 @@ export default function WatchFaceStudio({ onOrderWatch }) {
             {/* 1. Watch Face Selector */}
             <div className="p-5 rounded-2xl bg-white/[0.02] border border-white/10">
               <label className="text-xs uppercase tracking-widest font-mono text-[#38bdf8] mb-2.5 block">
-                1. Select Watch Face Dial
+                1. Watch face
               </label>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                 {WATCH_FACES.map((face) => (
@@ -512,7 +508,7 @@ export default function WatchFaceStudio({ onOrderWatch }) {
             <div className="p-5 rounded-2xl bg-white/[0.02] border border-white/10">
               <label className="text-xs uppercase tracking-widest font-mono text-[#38bdf8] mb-2.5 block flex items-center gap-1.5">
                 <Layers className="w-3.5 h-3.5" />
-                <span>2. Strap Architecture & Material</span>
+                <span>2. Strap</span>
               </label>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                 {STRAP_STYLES.map((st) => (
@@ -535,7 +531,7 @@ export default function WatchFaceStudio({ onOrderWatch }) {
             {/* 3. Chassis Finish Toggle */}
             <div className="p-5 rounded-2xl bg-white/[0.02] border border-white/10">
               <label className="text-xs uppercase tracking-widest font-mono text-[#38bdf8] mb-2.5 block">
-                3. Case Bezel Finish
+                3. Case color
               </label>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                 {STUDIO_CASES.map((c) => (
@@ -561,7 +557,7 @@ export default function WatchFaceStudio({ onOrderWatch }) {
             {/* Action Box */}
             <div className="p-5 rounded-2xl bg-gradient-to-r from-blue-950/40 via-black to-blue-950/30 border border-blue-500/30 flex flex-col sm:flex-row items-center justify-between gap-4">
               <div>
-                <span className="text-xs text-gray-400 font-mono block">Signature Series Bespoke</span>
+                <span className="text-xs text-gray-400 block">Your watch</span>
                 <span className="text-xl sm:text-2xl font-black text-white">
                   ₱ 2,999 – ₱ 3,499
                 </span>
@@ -577,7 +573,7 @@ export default function WatchFaceStudio({ onOrderWatch }) {
                 })}
                 className="w-full sm:w-auto px-6 py-3 rounded-full bg-[#1e40af] hover:bg-[#1d4ed8] text-white font-extrabold text-xs uppercase tracking-wider transition-all shadow-xl shadow-blue-900/40 hover:scale-105 cursor-pointer flex items-center justify-center gap-2"
               >
-                <span>Order This Custom Spec</span>
+                <span>Add to cart</span>
                 <ArrowRight className="w-3.5 h-3.5" />
               </button>
             </div>

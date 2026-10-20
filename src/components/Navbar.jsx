@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Watch, ShoppingBag, Search, Menu, X } from 'lucide-react';
+import { ShoppingBag, Search, Menu, X } from 'lucide-react';
 
 export default function Navbar({ onOpenCheckout, cartCount = 0, activeTab, setActiveTab }) {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -18,9 +18,10 @@ export default function Navbar({ onOpenCheckout, cartCount = 0, activeTab, setAc
   const navLinks = [
     { name: 'Home', href: '#home', id: 'home' },
     { name: 'Products', href: '#products', id: 'products' },
-    { name: 'Dial Studio', href: '#dial-studio', id: 'dial-studio' },
+    { name: 'Customize', href: '#dial-studio', id: 'dial-studio' },
     { name: 'About us', href: '#about', id: 'about' },
     { name: 'Contact', href: '#contact', id: 'contact' },
+    { name: 'Customer Reviews', href: '#reviews', id: 'reviews' },
   ];
 
   const handleNavClick = (id) => {
@@ -72,12 +73,12 @@ export default function Navbar({ onOpenCheckout, cartCount = 0, activeTab, setAc
           </a>
 
           {/* Desktop Nav Links */}
-          <nav className="hidden md:flex items-center gap-10">
+          <nav className="hidden xl:flex items-center gap-6" aria-label="Main navigation">
             {navLinks.map((link) => (
               <button
                 key={link.id}
                 onClick={() => handleNavClick(link.id)}
-                className={`text-sm tracking-wide font-medium transition-all relative py-1 cursor-pointer ${
+                className={`text-sm tracking-wide font-medium transition-all relative py-1 whitespace-nowrap cursor-pointer ${
                   activeTab === link.id
                     ? 'text-white font-semibold'
                     : 'text-gray-300 hover:text-white'
@@ -141,8 +142,10 @@ export default function Navbar({ onOpenCheckout, cartCount = 0, activeTab, setAc
             {/* Mobile Hamburger Toggle */}
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="p-2 text-gray-300 hover:text-white md:hidden"
+              className="p-2 text-gray-300 hover:text-white xl:hidden"
               aria-label="Toggle menu"
+              aria-expanded={mobileMenuOpen}
+              aria-controls="mobile-navigation"
             >
               {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
             </button>
@@ -153,7 +156,7 @@ export default function Navbar({ onOpenCheckout, cartCount = 0, activeTab, setAc
 
       {/* Mobile Menu Dropdown */}
       {mobileMenuOpen && (
-        <div className="md:hidden bg-black/95 border-b border-white/10 backdrop-blur-2xl px-6 py-6 transition-all">
+        <div id="mobile-navigation" className="xl:hidden bg-black/95 border-b border-white/10 backdrop-blur-2xl px-6 py-6 transition-all max-h-[calc(100dvh-80px)] overflow-y-auto">
           <div className="flex flex-col gap-4">
             {navLinks.map((link) => (
               <button
