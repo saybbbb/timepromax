@@ -1,6 +1,9 @@
-import React, { useState, useRef } from 'react';
-import { Phone, Clock, MapPin, Star, ShieldCheck, ChevronLeft, ChevronRight, CheckCircle2, Award } from 'lucide-react';
-import { motion } from 'framer-motion';
+import React, { useRef, useEffect } from 'react';
+import { Phone, Clock, MapPin, Star } from 'lucide-react';
+import gsap from 'gsap';
+import { ScrollTrigger } from 'gsap/ScrollTrigger';
+
+gsap.registerPlugin(ScrollTrigger);
 
 const ROW_1_REVIEWS = [
   {
@@ -88,73 +91,127 @@ const ROW_2_REVIEWS = [
   },
 ];
 
-const VERIFIED_REVIEWS = [...ROW_1_REVIEWS, ...ROW_2_REVIEWS];
+const ROW_1_QUAD = [...ROW_1_REVIEWS, ...ROW_1_REVIEWS, ...ROW_1_REVIEWS, ...ROW_1_REVIEWS];
+const ROW_2_QUAD = [...ROW_2_REVIEWS, ...ROW_2_REVIEWS, ...ROW_2_REVIEWS, ...ROW_2_REVIEWS];
 
-function ReviewCard({ review }) {
+function ReviewCard({ review, duplicate = false }) {
   return (
-    <div className="w-[320px] sm:w-[380px] shrink-0 bg-gradient-to-b from-[#141724]/90 to-[#0d0f17]/95 text-gray-200 rounded-3xl p-6 sm:p-7 shadow-2xl shadow-black/60 border border-white/10 hover:border-[#38bdf8]/40 transition-all duration-300 flex flex-col justify-between group hover:scale-[1.02]">
+    <article aria-hidden={duplicate || undefined} className="w-[320px] sm:w-[380px] shrink-0 bg-[#111317] text-gray-200 rounded-xl p-6 border border-white/10 flex flex-col justify-between">
       <div>
-        {/* Top Row: 5 Amber Stars + Cyan Quote Glyph */}
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-1">
+        <div role="img" className="mb-4" aria-label="5 out of 5 stars">
+          <div className="flex items-center gap-1" aria-hidden="true">
             {[1, 2, 3, 4, 5].map((s) => (
               <Star key={s} className="w-4 h-4 fill-amber-400 text-amber-400" />
             ))}
           </div>
-          <span className="text-3xl font-serif font-black text-[#38bdf8]/25 group-hover:text-[#38bdf8]/60 transition-colors leading-none select-none">
-            &rdquo;
-          </span>
         </div>
 
         {/* Review Quote Body */}
-        <p className="text-gray-300 group-hover:text-white transition-colors text-[14px] sm:text-[15px] font-light leading-relaxed line-clamp-3">
+        <p className="text-gray-300 text-sm sm:text-base leading-relaxed">
           &ldquo;{review.quote}&rdquo;
         </p>
       </div>
 
-      {/* Bottom Row: User Avatar & Model Pill Tag */}
-      <div className="pt-4 mt-5 border-t border-white/10 flex items-center justify-between gap-3">
-        {/* Left: Avatar + Name + Role */}
-        <div className="flex items-center gap-3 min-w-0">
-          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#1e2538] to-[#101422] border border-[#38bdf8]/30 flex items-center justify-center font-bold text-sm text-[#38bdf8] shrink-0 shadow-inner select-none">
-            {review.initial}
-          </div>
-          <div className="min-w-0">
-            <h4 className="font-bold text-white text-sm leading-tight truncate flex items-center gap-1.5">
-              <span>{review.name}</span>
-              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-            </h4>
-            <p className="text-xs text-gray-400 truncate mt-0.5">
-              {review.role}
-            </p>
-          </div>
-        </div>
+      <div className="pt-4 mt-5 border-t border-white/10">
+        <h4 className="font-semibold text-white text-sm leading-tight">{review.name}</h4>
+        <p className="text-xs text-gray-400 mt-1">{review.role}</p>
 
-        {/* Right: Rounded Model Pill Tag */}
-        <div className="bg-[#38bdf8]/10 text-[#38bdf8] px-3 py-1.5 rounded-full text-xs font-mono font-medium flex items-center gap-1.5 border border-[#38bdf8]/30 shadow-xs shrink-0 select-none">
-          <svg
-            className="w-3.5 h-3.5 shrink-0 text-[#38bdf8]"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
-            <rect x="6" y="7" width="12" height="10" rx="3" />
-            <path d="M9 7V3h6v4" />
-            <path d="M9 17v4h6v-4" />
-          </svg>
-          <span className="truncate max-w-[110px]">{review.model}</span>
-        </div>
+        <p className="text-xs text-gray-400 mt-3">Model: {review.model}</p>
       </div>
-    </div>
+    </article>
   );
 }
 
 export default function ContactUs() {
+  const sectionRef = useRef(null);
+  const showroomRef = useRef(null);
+  const reviewsHeaderRef = useRef(null);
+  const marqueeWrapperRef = useRef(null);
+  const row1Ref = useRef(null);
+  const row2Ref = useRef(null);
+  const isHoveredRef = useRef(false);
+
+  useEffect(() => {
+    // 1. Entrance reveals with ScrollTrigger
+    const ctx = gsap.context(() => {
+      if (showroomRef.current) {
+        gsap.fromTo(
+          showroomRef.current,
+          { opacity: 0, y: 35 },
+          {
+            opacity: 1,
+            y: 0,
+            duration: 0.9,
+            ease: 'power3.out',
+            scrollTrigger: {
+              trigger: showroomRef.current,
+              start: 'top 85%',
+            },
+          }
+        );
+      }
+
+      if (reviewsHeaderRef.current) {
+        gsap.fromTo(
+          reviewsHeaderRef.current.children,
+          { opacity: 0, y: 25 },
+          {
+            opacity: 1,
+            y: 0,
+            duration: 0.8,
+            stagger: 0.15,
+            ease: 'power3.out',
+            scrollTrigger: {
+              trigger: reviewsHeaderRef.current,
+              start: 'top 85%',
+            },
+          }
+        );
+      }
+    }, sectionRef);
+
+    // Slide the two rows in opposite directions, speeding up with page scrolling.
+    const firstRow = row1Ref.current;
+    const secondRow = row2Ref.current;
+    const wrapper = marqueeWrapperRef.current;
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+    let xPercent1 = 0;
+    let xPercent2 = -50;
+    let smoothVelocity = 0;
+    let smoothSkew = 0;
+
+    const tickerFn = (time, deltaTime) => {
+      if (reducedMotion.matches || isHoveredRef.current) return;
+      const bounds = wrapper.getBoundingClientRect();
+      if (bounds.bottom <= 0 || bounds.top >= window.innerHeight) return;
+
+      const dt = Math.min(deltaTime / 1000, 0.05);
+      const targetVelocity = window.lenis ? window.lenis.velocity : 0;
+      smoothVelocity += (targetVelocity - smoothVelocity) * 0.08;
+      const targetSkew = Math.max(-5.5, Math.min(5.5, -smoothVelocity * 0.35));
+      smoothSkew += (targetSkew - smoothSkew) * 0.1;
+      const deltaMove = 1.15 * (1 + Math.abs(smoothVelocity) * 0.18) * dt;
+
+      xPercent1 -= deltaMove;
+      if (xPercent1 <= -50) xPercent1 += 50;
+      xPercent2 += deltaMove;
+      if (xPercent2 >= 0) xPercent2 -= 50;
+
+      gsap.set(firstRow, { xPercent: xPercent1, skewX: smoothSkew, force3D: true });
+      gsap.set(secondRow, { xPercent: xPercent2, skewX: smoothSkew, force3D: true });
+    };
+
+    gsap.ticker.add(tickerFn);
+
+    return () => {
+      gsap.ticker.remove(tickerFn);
+      gsap.set([firstRow, secondRow], { clearProps: 'transform' });
+      ctx.revert();
+    };
+  }, []);
+
   return (
-    <section id="contact" className="pt-24 pb-28 bg-[#0a0c10] text-gray-200 relative overflow-hidden">
+    <section ref={sectionRef} id="contact" className="pt-24 pb-28 bg-[#0a0c10] text-gray-200 relative overflow-hidden">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         
         {/* Header */}
@@ -168,7 +225,10 @@ export default function ContactUs() {
         </div>
 
         {/* 1. Showroom & Contact Information Card matching Canva 3.png */}
-        <div className="p-8 sm:p-12 rounded-3xl bg-gradient-to-b from-[#181a20] to-[#121318] border border-white/10 mb-24 shadow-2xl">
+        <div
+          ref={showroomRef}
+          className="p-8 sm:p-12 rounded-3xl bg-gradient-to-b from-[#181a20] to-[#121318] border border-white/10 mb-24 shadow-2xl will-change-transform"
+        >
           <div className="grid grid-cols-1 md:grid-cols-12 gap-10 items-center">
             
             {/* Left: Circular Model Photo */}
@@ -263,33 +323,23 @@ export default function ContactUs() {
 
       </div>
 
-      {/* 2. VERIFIED BUYER REVIEWS (Dual-row left & right marquee matching TimePro Max dark tech theme) */}
-      <div className="w-full pt-12 pb-16 relative overflow-hidden border-t border-white/10">
-        
-        {/* Subtle Cyan Ambient Glow */}
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[750px] h-[350px] bg-[#38bdf8]/5 rounded-full blur-[120px] pointer-events-none" />
-
+      {/* Customer reviews */}
+      <section id="reviews" aria-labelledby="reviews-heading" className="w-full pt-12 pb-16 border-t border-white/10 scroll-mt-24">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 mb-10 sm:mb-12 relative z-10">
           
-          {/* Section Header */}
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-6">
+          {/* Section Header with ScrollTrigger Entrance */}
+          <div ref={reviewsHeaderRef} className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-6">
             
-            {/* Left: "Owners say it best" */}
             <div className="flex flex-col">
-              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#38bdf8]/10 border border-[#38bdf8]/30 text-[#38bdf8] text-xs font-mono tracking-wider uppercase mb-3 w-fit">
-                <Award className="w-3.5 h-3.5 text-[#38bdf8]" />
-                <span>Verified Buyer Experiences</span>
-              </div>
-              <h3 className="text-3xl sm:text-5xl lg:text-6xl font-black text-white tracking-tight uppercase font-sans">
-                OWNERS SAY <span className="text-[#38bdf8]">IT BEST.</span>
-              </h3>
+              <h2 id="reviews-heading" className="text-3xl sm:text-4xl font-bold text-white tracking-tight">
+                Customer Reviews
+              </h2>
               <p className="text-gray-400 text-sm sm:text-base mt-2 font-light">
                 Real feedback from active athletes, professionals, and daily users across the Philippines.
               </p>
             </div>
 
-            {/* Right: "4.9" Score Card */}
-            <div className="flex items-center gap-4 sm:gap-5 bg-gradient-to-br from-white/[0.05] to-white/[0.01] border border-white/10 px-5 py-3.5 rounded-2xl backdrop-blur-md shadow-2xl">
+            <div className="flex items-center gap-4">
               <span className="text-4xl sm:text-5xl lg:text-6xl font-black text-white tracking-tight leading-none font-sans">
                 4.9
               </span>
@@ -308,38 +358,27 @@ export default function ContactUs() {
           </div>
         </div>
 
-        {/* Dual-Row Marquee Tracks (Row 1 Left, Row 2 Right) */}
-        <div className="relative reviews-marquee-track overflow-hidden py-3 space-y-5 sm:space-y-6">
-          
-          {/* Left & Right Edge Vignette Fades blending seamlessly into dark page */}
-          <div className="absolute left-0 top-0 bottom-0 w-16 sm:w-44 bg-gradient-to-r from-[#0a0c10] via-[#0a0c10]/80 to-transparent pointer-events-none z-10" />
-          <div className="absolute right-0 top-0 bottom-0 w-16 sm:w-44 bg-gradient-to-l from-[#0a0c10] via-[#0a0c10]/80 to-transparent pointer-events-none z-10" />
-
-          {/* Row 1: Scrolling Left */}
-          <div className="animate-marquee-left flex gap-5 sm:gap-6 pl-4">
-            {[...ROW_1_REVIEWS, ...ROW_1_REVIEWS].map((rev, idx) => (
-              <ReviewCard key={`r1-${rev.id}-${idx}`} review={rev} />
+        <div
+          ref={marqueeWrapperRef}
+          onMouseEnter={() => { isHoveredRef.current = true; }}
+          onMouseLeave={() => { isHoveredRef.current = false; }}
+          className="relative overflow-hidden py-3 space-y-5"
+        >
+          <div className="absolute inset-y-0 left-0 w-8 sm:w-24 bg-gradient-to-r from-[#0a0c10] to-transparent pointer-events-none z-10" />
+          <div className="absolute inset-y-0 right-0 w-8 sm:w-24 bg-gradient-to-l from-[#0a0c10] to-transparent pointer-events-none z-10" />
+          <div ref={row1Ref} className="flex gap-5 pr-5 w-max will-change-transform">
+            {ROW_1_QUAD.map((review, index) => (
+              <ReviewCard key={`${review.id}-${index}`} review={review} duplicate={index >= ROW_1_REVIEWS.length} />
             ))}
           </div>
-
-          {/* Row 2: Scrolling Right */}
-          <div className="animate-marquee-right flex gap-5 sm:gap-6 pl-4">
-            {[...ROW_2_REVIEWS, ...ROW_2_REVIEWS].map((rev, idx) => (
-              <ReviewCard key={`r2-${rev.id}-${idx}`} review={rev} />
+          <div ref={row2Ref} className="flex gap-5 pr-5 w-max will-change-transform">
+            {ROW_2_QUAD.map((review, index) => (
+              <ReviewCard key={`${review.id}-${index}`} review={review} duplicate={index >= ROW_2_REVIEWS.length} />
             ))}
           </div>
-
         </div>
-
-        {/* Footer Hint */}
-        <div className="mt-8 text-center relative z-10">
-          <span className="text-[11px] sm:text-xs font-mono text-gray-500 uppercase tracking-widest flex items-center justify-center gap-2">
-            <ShieldCheck className="w-3.5 h-3.5 text-[#38bdf8]" />
-            <span>Hover over any review to pause • 100% Authenticated Purchases</span>
-          </span>
-        </div>
-
-      </div>
+        <p className="mt-6 text-center text-sm text-gray-400">Hover over the reviews to pause.</p>
+      </section>
 
     </section>
   );

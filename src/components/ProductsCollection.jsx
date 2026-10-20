@@ -1,6 +1,10 @@
-import React, { useState, useRef } from 'react';
-import { Plus, ShoppingBag, ChevronLeft, ChevronRight, SlidersHorizontal, Eye } from 'lucide-react';
+import React, { useState, useRef, useEffect } from 'react';
+import { Plus, ShoppingBag, ChevronLeft, ChevronRight, Eye } from 'lucide-react';
 import { motion } from 'framer-motion';
+import gsap from 'gsap';
+import { ScrollTrigger } from 'gsap/ScrollTrigger';
+
+gsap.registerPlugin(ScrollTrigger);
 
 export const WATCH_COLLECTION = [
   {
@@ -60,8 +64,8 @@ export const WATCH_COLLECTION = [
   },
 ];
 
-/* 3D Interactive Tilt Watch Stage */
-function TiltWatchStage({ watch }) {
+/* 3D Interactive Tilt Watch Stage with GSAP Depth Hooks */
+function TiltWatchStage({ watch, watchFloatRef, glowRef, pedestalRef }) {
   const [coords, setCoords] = useState({ x: 0, y: 0 });
   const [isHovered, setIsHovered] = useState(false);
   const cardRef = useRef(null);
@@ -88,41 +92,48 @@ function TiltWatchStage({ watch }) {
       className="relative max-w-sm w-full group flex flex-col items-center py-6 select-none cursor-pointer"
       style={{ perspective: 1000 }}
     >
-      {/* Ambient Backlight Glow */}
+      {/* Ambient Backlight Glow with Scrubbed Expansion */}
       <div
-        className="absolute top-1/4 w-56 h-56 blur-[80px] rounded-full opacity-25 transition-opacity duration-500 group-hover:opacity-60 pointer-events-none"
+        ref={glowRef}
+        className="absolute top-1/4 w-56 h-56 blur-[85px] rounded-full opacity-25 transition-opacity duration-500 group-hover:opacity-70 pointer-events-none will-change-transform"
         style={{ backgroundColor: watch.accentColor }}
       />
 
-      {/* 3D Tilting Watch Cutout Container */}
-      <motion.div
-        animate={{
-          rotateX: isHovered ? coords.y * -25 : 0,
-          rotateY: isHovered ? coords.x * 25 : 0,
-          scale: isHovered ? 1.05 : 1,
-        }}
-        transition={{ type: 'spring', stiffness: 280, damping: 22 }}
-        className="relative z-10 w-full flex flex-col items-center justify-center transform-gpu"
-      >
-        <img
-          src={watch.image}
-          alt={watch.name}
-          className="w-full max-h-[440px] object-contain drop-shadow-[0_25px_35px_rgba(0,0,0,0.95)]"
-        />
-
-        {/* Dynamic Glass Glare Sheen following cursor */}
-        {isHovered && (
-          <div
-            className="absolute inset-4 pointer-events-none rounded-3xl opacity-20 mix-blend-overlay transition-opacity duration-300"
-            style={{
-              background: `radial-gradient(circle at ${(coords.x + 0.5) * 100}% ${(coords.y + 0.5) * 100}%, rgba(255,255,255,1), transparent 55%)`,
-            }}
+      {/* GSAP Scrubbed Watch Levitation Container */}
+      <div ref={watchFloatRef} className="relative z-10 w-full flex flex-col items-center justify-center will-change-transform">
+        {/* 3D Tilting Watch Cutout */}
+        <motion.div
+          animate={{
+            rotateX: isHovered ? coords.y * -25 : 0,
+            rotateY: isHovered ? coords.x * 25 : 0,
+            scale: isHovered ? 1.05 : 1,
+          }}
+          transition={{ type: 'spring', stiffness: 280, damping: 22 }}
+          className="relative w-full flex flex-col items-center justify-center transform-gpu"
+        >
+          <img
+            src={watch.image}
+            alt={watch.name}
+            className="w-full max-h-[440px] object-contain drop-shadow-[0_25px_35px_rgba(0,0,0,0.95)]"
           />
-        )}
-      </motion.div>
 
-      {/* Luxury Pedestal Base */}
-      <div className="w-56 h-7 -mt-6 rounded-[100%] bg-gradient-to-b from-white/10 to-transparent border-t border-white/20 blur-[1px] pointer-events-none shadow-2xl" />
+          {/* Dynamic Glass Glare Sheen following cursor */}
+          {isHovered && (
+            <div
+              className="absolute inset-4 pointer-events-none rounded-3xl opacity-20 mix-blend-overlay transition-opacity duration-300"
+              style={{
+                background: `radial-gradient(circle at ${(coords.x + 0.5) * 100}% ${(coords.y + 0.5) * 100}%, rgba(255,255,255,1), transparent 55%)`,
+              }}
+            />
+          )}
+        </motion.div>
+      </div>
+
+      {/* Luxury Pedestal Base with Independent Optical Depth */}
+      <div
+        ref={pedestalRef}
+        className="w-56 h-7 -mt-6 rounded-[100%] bg-gradient-to-b from-white/10 to-transparent border-t border-white/20 blur-[1px] pointer-events-none shadow-2xl will-change-transform"
+      />
       
       {/* Subtle 3D Tilt Hint Pill */}
       <span className="text-[10px] font-mono text-gray-500 mt-2 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -132,9 +143,210 @@ function TiltWatchStage({ watch }) {
   );
 }
 
+/* Desktop Single Product Row with GSAP ScrollTrigger Depth Parallax */
+function DesktopProductRow({ watch, index, onSelectProduct, onAddToCart, onOpenSpecs }) {
+  const rowRef = useRef(null);
+  const watchFloatRef = useRef(null);
+  const glowRef = useRef(null);
+  const pedestalRef = useRef(null);
+  const contentRef = useRef(null);
+
+  useEffect(() => {
+    const ctx = gsap.context(() => {
+      // 1. Scrubbed 3D Watch Float Parallax
+      if (watchFloatRef.current) {
+        gsap.fromTo(
+          watchFloatRef.current,
+          { y: 38 },
+          {
+            y: -38,
+            ease: 'none',
+            scrollTrigger: {
+              trigger: rowRef.current,
+              start: 'top bottom',
+              end: 'bottom top',
+              scrub: 1.2,
+            },
+          }
+        );
+      }
+
+      // 2. Pedestal differential depth (moves slower for levitation illusion)
+      if (pedestalRef.current) {
+        gsap.fromTo(
+          pedestalRef.current,
+          { y: 14, scaleX: 0.92 },
+          {
+            y: -16,
+            scaleX: 1.06,
+            ease: 'none',
+            scrollTrigger: {
+              trigger: rowRef.current,
+              start: 'top bottom',
+              end: 'bottom top',
+              scrub: 1.5,
+            },
+          }
+        );
+      }
+
+      // 3. Ambient backlight glow expands & intensifies on scroll
+      if (glowRef.current) {
+        gsap.fromTo(
+          glowRef.current,
+          { scale: 0.75, opacity: 0.18 },
+          {
+            scale: 1.25,
+            opacity: 0.52,
+            ease: 'power1.out',
+            scrollTrigger: {
+              trigger: rowRef.current,
+              start: 'top 85%',
+              end: 'center 45%',
+              scrub: 1,
+            },
+          }
+        );
+      }
+
+      // 4. Staggered reveal for details and specs
+      if (contentRef.current) {
+        const revealElements = contentRef.current.querySelectorAll('.row-reveal-item');
+        gsap.fromTo(
+          revealElements,
+          { opacity: 0, x: 30 },
+          {
+            opacity: 1,
+            x: 0,
+            duration: 0.75,
+            stagger: 0.08,
+            ease: 'power3.out',
+            scrollTrigger: {
+              trigger: rowRef.current,
+              start: 'top 75%',
+            },
+          }
+        );
+      }
+    }, rowRef);
+
+    return () => ctx.revert();
+  }, []);
+
+  return (
+    <div
+      ref={rowRef}
+      className="grid grid-cols-12 gap-8 items-center border-b border-white/10 pb-20 will-change-transform"
+    >
+      {/* Left Column: 3D Tilting Watch on Levitation Pedestal */}
+      <div className="col-span-6 flex justify-center items-center">
+        <TiltWatchStage
+          watch={watch}
+          watchFloatRef={watchFloatRef}
+          glowRef={glowRef}
+          pedestalRef={pedestalRef}
+        />
+      </div>
+
+      {/* Right Column: Title, Price, Description, BUY NOW button, Specs Sheet Button */}
+      <div ref={contentRef} className="col-span-6 flex flex-col items-start text-left pl-8">
+        <div className="row-reveal-item inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/5 border border-white/10 text-xs font-mono text-gray-400 mb-3">
+          <span>Signature Model 0{index + 1}</span>
+        </div>
+
+        <h3 className="row-reveal-item text-3xl sm:text-4xl font-extrabold text-white font-sans tracking-tight mb-2">
+          {watch.name}
+        </h3>
+
+        <div className="row-reveal-item text-xl sm:text-2xl font-bold text-gray-200 mb-4 font-mono">
+          Price: <span className="text-[#38bdf8]">{watch.formattedPrice}</span>
+        </div>
+
+        {/* Action Buttons */}
+        <div className="row-reveal-item flex items-center gap-3 mb-4">
+          <button
+            onClick={() => onSelectProduct(watch)}
+            className="px-7 py-3 rounded-full bg-[#1e40af] hover:bg-[#1d4ed8] text-white font-extrabold text-xs tracking-wider uppercase shadow-lg shadow-blue-900/40 transition-all hover:scale-105 cursor-pointer flex items-center gap-2"
+          >
+            <ShoppingBag className="w-3.5 h-3.5 fill-white" />
+            <span>BUY NOW !</span>
+          </button>
+
+          <button
+            onClick={() => (onAddToCart || onSelectProduct)(watch)}
+            className="w-10 h-10 rounded-full border border-white/30 flex items-center justify-center text-white hover:border-[#38bdf8] hover:text-[#38bdf8] transition-colors cursor-pointer"
+            title="Add to Shopping Bag"
+          >
+            <Plus className="w-4 h-4" />
+          </button>
+
+          <button
+            onClick={() => onOpenSpecs(watch)}
+            className="px-5 py-3 rounded-full bg-white/5 hover:bg-white/10 border border-white/15 text-gray-300 hover:text-white font-semibold text-xs transition-all flex items-center gap-2 cursor-pointer ml-1"
+          >
+            <Eye className="w-4 h-4 text-[#38bdf8]" />
+            <span>View Full Specs</span>
+          </button>
+        </div>
+
+        <p className="row-reveal-item text-sm text-gray-400 font-light max-w-md leading-relaxed">
+          {watch.desc}
+        </p>
+
+        {/* Specs pill */}
+        <div className="row-reveal-item mt-5 flex items-center gap-3 text-xs text-gray-400 font-mono bg-white/[0.02] border border-white/5 px-4 py-2 rounded-xl">
+          <span>Case: {watch.caseFinish}</span>
+          <span>•</span>
+          <span>Strap: {watch.strap}</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function ProductsCollection({ onSelectProduct, onAddToCart, onOpenSpecs }) {
   const [mobileIndex, setMobileIndex] = useState(0);
   const carouselRef = useRef(null);
+  const sectionRef = useRef(null);
+  const headerRef = useRef(null);
+
+  useEffect(() => {
+    const ctx = gsap.context(() => {
+      if (headerRef.current) {
+        gsap.fromTo(
+          '.collection-gold-line',
+          { scaleX: 0 },
+          {
+            scaleX: 1,
+            duration: 1.1,
+            ease: 'power2.out',
+            scrollTrigger: {
+              trigger: headerRef.current,
+              start: 'top 85%',
+            },
+          }
+        );
+
+        gsap.fromTo(
+          headerRef.current.querySelectorAll('.header-reveal-item'),
+          { opacity: 0, y: 22 },
+          {
+            opacity: 1,
+            y: 0,
+            duration: 0.8,
+            stagger: 0.12,
+            ease: 'power3.out',
+            scrollTrigger: {
+              trigger: headerRef.current,
+              start: 'top 85%',
+            },
+          }
+        );
+      }
+    }, sectionRef);
+
+    return () => ctx.revert();
+  }, []);
 
   const scrollToIndex = (index) => {
     const nextIdx = Math.max(0, Math.min(index, WATCH_COLLECTION.length - 1));
@@ -157,28 +369,28 @@ export default function ProductsCollection({ onSelectProduct, onAddToCart, onOpe
   };
 
   return (
-    <section id="products" className="py-24 bg-black text-white relative">
+    <section ref={sectionRef} id="products" className="py-24 bg-black text-white relative">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         
-        {/* Banner: OUR COLLECTION matching Canva 2.png */}
-        <div className="text-center max-w-3xl mx-auto mb-16">
+        {/* Banner: OUR COLLECTION with GSAP Animated Accents */}
+        <div ref={headerRef} className="text-center max-w-3xl mx-auto mb-16">
           <div className="relative inline-block px-10 py-3 mb-8">
-            <div className="absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-[#d4af37] to-transparent opacity-60" />
-            <h2 className="text-3xl sm:text-5xl font-black tracking-widest uppercase font-serif text-[#f3f4f6]">
+            <div className="collection-gold-line absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-[#d4af37] to-transparent opacity-60 origin-center" />
+            <h2 className="header-reveal-item text-3xl sm:text-5xl font-black tracking-widest uppercase font-serif text-[#f3f4f6]">
               OUR COLLECTION
             </h2>
-            <div className="absolute inset-x-0 bottom-0 h-[1px] bg-gradient-to-r from-transparent via-[#d4af37] to-transparent opacity-60" />
+            <div className="collection-gold-line absolute inset-x-0 bottom-0 h-[1px] bg-gradient-to-r from-transparent via-[#d4af37] to-transparent opacity-60 origin-center" />
           </div>
 
-          <blockquote className="text-xl sm:text-2xl font-bold italic text-white mb-4">
+          <blockquote className="header-reveal-item text-xl sm:text-2xl font-bold italic text-white mb-4">
             "Smarter Time, Better You, Built for Every Moment."
           </blockquote>
           
-          <p className="text-gray-300 text-sm sm:text-base leading-relaxed max-w-2xl mx-auto">
+          <p className="header-reveal-item text-gray-300 text-sm sm:text-base leading-relaxed max-w-2xl mx-auto">
             Precision engineered with premium materials and advanced technology. TimePromax smartwatches are designed to keep up with your lifestyle — wherever life takes you.
           </p>
 
-          <div className="mt-12 flex items-center justify-center gap-4">
+          <div className="header-reveal-item mt-12 flex items-center justify-center gap-4">
             <span className="h-[1px] w-12 bg-white/30" />
             <div className="flex flex-col">
               <span className="text-2xl font-bold text-white font-serif tracking-wide">
@@ -311,77 +523,17 @@ export default function ProductsCollection({ onSelectProduct, onAddToCart, onOpe
           </div>
         </div>
 
-        {/* 2. DESKTOP FULL LUXURY LIST WITH 3D CURSOR TILT (Visible on md:block) */}
+        {/* 2. DESKTOP FULL LUXURY LIST WITH 3D CURSOR TILT & GSAP DEPTH PARALLAX */}
         <div className="hidden md:block space-y-20">
           {WATCH_COLLECTION.map((watch, index) => (
-            <motion.div
+            <DesktopProductRow
               key={watch.id}
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.6, delay: index * 0.1 }}
-              className="grid grid-cols-12 gap-8 items-center border-b border-white/10 pb-20"
-            >
-              
-              {/* Left Column: 3D Tilting Watch on Pedestal */}
-              <div className="col-span-6 flex justify-center items-center">
-                <TiltWatchStage watch={watch} />
-              </div>
-
-              {/* Right Column: Title, Price, Description, BUY NOW button, Specs Sheet Button */}
-              <div className="col-span-6 flex flex-col items-start text-left pl-8">
-                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/5 border border-white/10 text-xs font-mono text-gray-400 mb-3">
-                  <span>Signature Model 0{index + 1}</span>
-                </div>
-
-                <h3 className="text-3xl sm:text-4xl font-extrabold text-white font-sans tracking-tight mb-2">
-                  {watch.name}
-                </h3>
-
-                <div className="text-xl sm:text-2xl font-bold text-gray-200 mb-4 font-mono">
-                  Price: <span className="text-[#38bdf8]">{watch.formattedPrice}</span>
-                </div>
-
-                {/* BUY NOW Button with Plus Icon matching Canva */}
-                <div className="flex items-center gap-3 mb-4">
-                  <button
-                    onClick={() => onSelectProduct(watch)}
-                    className="px-7 py-3 rounded-full bg-[#1e40af] hover:bg-[#1d4ed8] text-white font-extrabold text-xs tracking-wider uppercase shadow-lg shadow-blue-900/40 transition-all hover:scale-105 cursor-pointer flex items-center gap-2"
-                  >
-                    <ShoppingBag className="w-3.5 h-3.5 fill-white" />
-                    <span>BUY NOW !</span>
-                  </button>
-
-                  <button
-                    onClick={() => (onAddToCart || onSelectProduct)(watch)}
-                    className="w-10 h-10 rounded-full border border-white/30 flex items-center justify-center text-white hover:border-[#38bdf8] hover:text-[#38bdf8] transition-colors cursor-pointer"
-                    title="Add to Shopping Bag"
-                  >
-                    <Plus className="w-4 h-4" />
-                  </button>
-
-                  <button
-                    onClick={() => onOpenSpecs(watch)}
-                    className="px-5 py-3 rounded-full bg-white/5 hover:bg-white/10 border border-white/15 text-gray-300 hover:text-white font-semibold text-xs transition-all flex items-center gap-2 cursor-pointer ml-1"
-                  >
-                    <Eye className="w-4 h-4 text-[#38bdf8]" />
-                    <span>View Full Specs</span>
-                  </button>
-                </div>
-
-                <p className="text-sm text-gray-400 font-light max-w-md leading-relaxed">
-                  {watch.desc}
-                </p>
-
-                {/* Specs pill */}
-                <div className="mt-5 flex items-center gap-3 text-xs text-gray-400 font-mono bg-white/[0.02] border border-white/5 px-4 py-2 rounded-xl">
-                  <span>Case: {watch.caseFinish}</span>
-                  <span>•</span>
-                  <span>Strap: {watch.strap}</span>
-                </div>
-              </div>
-
-            </motion.div>
+              watch={watch}
+              index={index}
+              onSelectProduct={onSelectProduct}
+              onAddToCart={onAddToCart}
+              onOpenSpecs={onOpenSpecs}
+            />
           ))}
         </div>
 

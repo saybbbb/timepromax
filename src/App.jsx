@@ -1,4 +1,7 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
+import Lenis from 'lenis';
+import gsap from 'gsap';
+import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import Navbar from './components/Navbar';
 import Hero from './components/Hero';
 import OurStoryLifestyle from './components/OurStoryLifestyle';
@@ -13,9 +16,45 @@ import QuickSpecsModal from './components/QuickSpecsModal';
 import AddedToCartBar from './components/AddedToCartBar';
 import FloatingChatbot from './components/FloatingChatbot';
 
+gsap.registerPlugin(ScrollTrigger);
+
 export default function App() {
   const [activeTab, setActiveTab] = useState('home');
+  const lenisRef = useRef(null);
   
+  // 1. Initialize Lenis Global Inertial Scroll Engine synchronized with GSAP
+  useEffect(() => {
+    const lenis = new Lenis({
+      duration: 1.25,
+      easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)), // Exponential deceleration curve
+      orientation: 'vertical',
+      gestureOrientation: 'vertical',
+      smoothWheel: true,
+      wheelMultiplier: 0.95,
+      touchMultiplier: 1.8,
+      infinite: false,
+    });
+
+    lenisRef.current = lenis;
+    window.lenis = lenis;
+
+    // Synchronize Lenis with GSAP ScrollTrigger
+    lenis.on('scroll', ScrollTrigger.update);
+
+    // Connect GSAP ticker to Lenis RAF loop
+    const updateTicker = (time) => {
+      lenis.raf(time * 1000);
+    };
+    gsap.ticker.add(updateTicker);
+    gsap.ticker.lagSmoothing(0);
+
+    return () => {
+      gsap.ticker.remove(updateTicker);
+      lenis.destroy();
+      delete window.lenis;
+    };
+  }, []);
+
   // Real Cart State: Empty by default
   const [cartItems, setCartItems] = useState([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
@@ -28,6 +67,16 @@ export default function App() {
   // Quick Specs Modal state
   const [isSpecsOpen, setIsSpecsOpen] = useState(false);
   const [specsProduct, setSpecsProduct] = useState(WATCH_COLLECTION[0]);
+
+  // Stop background scroll when modals/drawers are open
+  useEffect(() => {
+    if (!lenisRef.current) return;
+    if (isCartOpen || isCheckoutOpen || isSpecsOpen) {
+      lenisRef.current.stop();
+    } else {
+      lenisRef.current.start();
+    }
+  }, [isCartOpen, isCheckoutOpen, isSpecsOpen]);
 
   // Floating Added-to-Cart Bar State (replaces old floating quick-buy bar)
   const [lastAddedWatch, setLastAddedWatch] = useState(null);
